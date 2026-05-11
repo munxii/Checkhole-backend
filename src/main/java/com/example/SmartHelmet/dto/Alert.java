@@ -24,6 +24,8 @@ public class Alert {
     @Indexed
     private String pipeId;
 
+    private String pipeName;
+
     private Pipe.Status status;
 
     private String message;

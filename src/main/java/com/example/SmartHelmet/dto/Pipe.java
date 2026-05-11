@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter @Setter
@@ -22,12 +23,15 @@ public class Pipe {
 
     private String name;
     private String region;
+    private String address;
     private double lat;
     private double lng;
 
     private Status status;
 
     private double sensorValue;
+
+    private LocalDate installedAt;
 
     private LocalDateTime updatedAt;
 

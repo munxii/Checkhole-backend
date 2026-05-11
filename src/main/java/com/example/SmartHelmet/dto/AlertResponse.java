@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class AlertResponse {
     private String id;
     private String pipeId;
+    private String pipeName;
     private String status;
     private String message;
     private LocalDateTime createdAt;
@@ -23,6 +24,7 @@ public class AlertResponse {
         return AlertResponse.builder()
                 .id(alert.getId())
                 .pipeId(alert.getPipeId())
+                .pipeName(alert.getPipeName())
                 .status(alert.getStatus() == null ? null : alert.getStatus().name().toLowerCase())
                 .message(alert.getMessage())
                 .createdAt(alert.getCreatedAt())
