@@ -3,9 +3,11 @@ package com.example.SmartHelmet.config;
 import com.example.SmartHelmet.dto.Alert;
 import com.example.SmartHelmet.dto.Member;
 import com.example.SmartHelmet.dto.Pipe;
+import com.example.SmartHelmet.dto.SensorReading;
 import com.example.SmartHelmet.repository.AlertRepository;
 import com.example.SmartHelmet.repository.MemberRepository;
 import com.example.SmartHelmet.repository.PipeRepository;
+import com.example.SmartHelmet.repository.SensorReadingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -27,6 +30,7 @@ public class DataInitializer implements CommandLineRunner {
     private final MemberRepository memberRepository;
     private final PipeRepository pipeRepository;
     private final AlertRepository alertRepository;
+    private final SensorReadingRepository sensorReadingRepository;
     private final PasswordEncoder passwordEncoder;
 
     private record PipeBackfill(String address, LocalDate installedAt) {}
@@ -46,6 +50,7 @@ public class DataInitializer implements CommandLineRunner {
         migratePipes();
         seedAlerts(pipes);
         migrateAlerts();
+        seedSensorReadings(pipes);
     }
 
     private void seedAdmin() {
@@ -151,6 +156,53 @@ public class DataInitializer implements CommandLineRunner {
             alertRepository.save(alert);
         }
         log.info("[DataInitializer] Alert 10건 생성");
+    }
+
+    private void seedSensorReadings(List<Pipe> pipes) {
+        if (sensorReadingRepository.count() > 0) {
+            log.info("[DataInitializer] SensorReading 데이터 이미 존재 — 스킵");
+            return;
+        }
+        if (pipes.isEmpty()) return;
+
+        LocalDateTime now = LocalDateTime.now();
+        Random rnd = new Random(42);
+        int count = 0;
+
+        for (Pipe pipe : pipes) {
+            for (int i = 23; i >= 0; i--) {
+                double progress = (24.0 - i) / 24.0;
+                LocalDateTime t = now.minusHours(i);
+
+                SensorReading r = SensorReading.builder()
+                        .pipeId(pipe.getId())
+                        .timestamp(t)
+                        .displacement(value(pipe.getStatus(), progress, 1.2, 4.5, 10.5, 0.6, rnd))
+                        .pressure   (value(pipe.getStatus(), progress, 1.7, 4.5, 8.0,  0.4, rnd))
+                        .moisture   (value(pipe.getStatus(), progress, 37,  62,  85,   3.0, rnd))
+                        .vibration  (value(pipe.getStatus(), progress, 8,   24,  46,   2.5, rnd))
+                        .build();
+                sensorReadingRepository.save(r);
+                count++;
+            }
+        }
+        log.info("[DataInitializer] SensorReading {}건 생성 (파이프 {}개 × 24h)", count, pipes.size());
+    }
+
+    private double value(Pipe.Status status, double progress,
+                         double normalMid, double cautionMid, double dangerMid,
+                         double noise, Random rnd) {
+        double mid;
+        double trendFactor;
+        switch (status) {
+            case DANGER  -> { mid = dangerMid;  trendFactor = 0.30; }
+            case CAUTION -> { mid = cautionMid; trendFactor = 0.20; }
+            default      -> { mid = normalMid;  trendFactor = 0.00; }
+        }
+        double startOffset = -mid * trendFactor / 2.0;
+        double trend = mid * trendFactor * progress;
+        double v = mid + startOffset + trend + rnd.nextGaussian() * noise;
+        return Math.round(v * 10.0) / 10.0;
     }
 
     private void migrateAlerts() {
