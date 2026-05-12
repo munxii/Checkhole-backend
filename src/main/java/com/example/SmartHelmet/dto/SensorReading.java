@@ -31,4 +31,10 @@ public class SensorReading {
     private double pressure;
     private double moisture;
     private double vibration;
+
+    /** Acoustic resonance peak frequency (Hz). Populated by gateway ingestion only. */
+    private Double peak;
+
+    /** Acoustic resonance amplitude (0.0~1.0). Populated by gateway ingestion only. */
+    private Double amp;
 }

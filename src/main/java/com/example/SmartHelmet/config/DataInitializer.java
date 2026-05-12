@@ -41,14 +41,14 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final MongoTemplate mongoTemplate;
 
-    private record PipeBackfill(String address, LocalDate installedAt, String regionId) {}
+    private record PipeBackfill(String address, LocalDate installedAt, String regionId, String deviceId) {}
 
     private static final Map<String, PipeBackfill> PIPE_META = Map.of(
-            "강남 하수관 A-1", new PipeBackfill("서울 강남구 테헤란로 152",      LocalDate.of(2018, 3, 15),  "seoul-gangnam"),
-            "마포 상수관 B-2", new PipeBackfill("서울 마포구 월드컵북로 396",    LocalDate.of(2019, 7, 22),  "seoul-mapo"),
-            "해운대 하수관 C-3", new PipeBackfill("부산 해운대구 해운대해변로 264", LocalDate.of(2017, 11, 8),  "busan-haeundae"),
-            "수성 상수관 D-4", new PipeBackfill("대구 수성구 동대구로 350",      LocalDate.of(2020, 5, 30),  "daegu-suseong"),
-            "연수 하수관 E-5", new PipeBackfill("인천 연수구 컨벤시아대로 165",  LocalDate.of(2016, 9, 12),  "incheon-yeonsu")
+            "강남 하수관 A-1", new PipeBackfill("서울 강남구 테헤란로 152",      LocalDate.of(2018, 3, 15),  "seoul-gangnam",   null),
+            "마포 상수관 B-2", new PipeBackfill("서울 마포구 월드컵북로 396",    LocalDate.of(2019, 7, 22),  "seoul-mapo",      null),
+            "해운대 하수관 C-3", new PipeBackfill("부산 해운대구 해운대해변로 264", LocalDate.of(2017, 11, 8),  "busan-haeundae",  "ch-001"),
+            "수성 상수관 D-4", new PipeBackfill("대구 수성구 동대구로 350",      LocalDate.of(2020, 5, 30),  "daegu-suseong",   null),
+            "연수 하수관 E-5", new PipeBackfill("인천 연수구 컨벤시아대로 165",  LocalDate.of(2016, 9, 12),  "incheon-yeonsu",  null)
     );
 
     private record RegionSeed(
@@ -187,6 +187,7 @@ public class DataInitializer implements CommandLineRunner {
                 .region(region)
                 .regionId(meta == null ? null : meta.regionId())
                 .address(meta == null ? null : meta.address())
+                .deviceId(meta == null ? null : meta.deviceId())
                 .lat(lat).lng(lng)
                 .status(status)
                 .sensorValue(sensorValue)
@@ -214,13 +215,17 @@ public class DataInitializer implements CommandLineRunner {
                 p.setRegionId(meta.regionId());
                 dirty = true;
             }
+            if (p.getDeviceId() == null && meta.deviceId() != null) {
+                p.setDeviceId(meta.deviceId());
+                dirty = true;
+            }
             if (dirty) {
                 pipeRepository.save(p);
                 updated++;
             }
         }
         if (updated > 0) {
-            log.info("[DataInitializer] Pipe {}건 backfill (address/installedAt/regionId)", updated);
+            log.info("[DataInitializer] Pipe {}건 backfill (address/installedAt/regionId/deviceId)", updated);
         } else {
             log.info("[DataInitializer] Pipe backfill 대상 없음");
         }

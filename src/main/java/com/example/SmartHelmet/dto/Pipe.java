@@ -28,6 +28,10 @@ public class Pipe {
     @org.springframework.data.mongodb.core.index.Indexed
     private String regionId;
 
+    /** Physical IoT device identifier mapped to this pipe (e.g., "ch-001"). Nullable. */
+    @org.springframework.data.mongodb.core.index.Indexed(unique = true)
+    private String deviceId;
+
     private String address;
     private double lat;
     private double lng;
