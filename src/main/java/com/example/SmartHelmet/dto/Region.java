@@ -13,23 +13,24 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "members")
-public class Member {
+@Document(collection = "regions")
+public class Region {
 
     @Id
     private String id;
 
-    @Indexed(unique = true)
-    private String username;
+    private String name;
 
-    private String password;
+    private Level level;
 
-    private Role role;
+    @Indexed
+    private String parentId;
 
-    /** Region.id (nullable for CENTRAL/CITIZEN) */
-    private String primaryRegionId;
+    private double centerLat;
+    private double centerLng;
+    private double zoom;
 
-    public enum Role {
-        CENTRAL, METRO, DISTRICT, FIELD, CITIZEN
+    public enum Level {
+        METRO, DISTRICT
     }
 }

@@ -17,6 +17,7 @@ public class PipeResponse {
     private String id;
     private String name;
     private String region;
+    private String regionId;
     private String address;
     private double lat;
     private double lng;
@@ -30,6 +31,7 @@ public class PipeResponse {
                 .id(pipe.getId())
                 .name(pipe.getName())
                 .region(pipe.getRegion())
+                .regionId(pipe.getRegionId())
                 .address(pipe.getAddress())
                 .lat(pipe.getLat())
                 .lng(pipe.getLng())

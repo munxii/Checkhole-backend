@@ -13,6 +13,9 @@ import lombok.Setter;
 public class LoginResponse {
     private String token;
     private String username;
-    private String region;
     private Member.Role role;
+    /** Region.id (nullable for CENTRAL/CITIZEN) */
+    private String primaryRegionId;
+    /** Display label: "전국" / "서울특별시" / "서울 강남구" / "시민" */
+    private String regionName;
 }

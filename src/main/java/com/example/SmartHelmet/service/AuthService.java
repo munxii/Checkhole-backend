@@ -16,6 +16,7 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final RegionAccessService regionAccessService;
 
     public LoginResponse login(LoginRequest request) {
         Member member = memberRepository.findByUsername(request.getId())
@@ -30,20 +31,21 @@ public class AuthService {
         return LoginResponse.builder()
                 .token(token)
                 .username(member.getUsername())
-                .region(member.getRegion())
                 .role(member.getRole())
+                .primaryRegionId(member.getPrimaryRegionId())
+                .regionName(regionAccessService.displayName(member))
                 .build();
     }
 
-    public Member register(String username, String password, String region, Member.Role role) {
+    public Member register(String username, String password, Member.Role role, String primaryRegionId) {
         if (memberRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("이미 존재하는 사용자입니다.");
         }
         Member member = Member.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
-                .region(region)
                 .role(role)
+                .primaryRegionId(primaryRegionId)
                 .build();
         return memberRepository.save(member);
     }

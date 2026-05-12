@@ -16,6 +16,7 @@ public class AlertResponse {
     private String id;
     private String pipeId;
     private String pipeName;
+    private String regionId;
     private String status;
     private String message;
     private LocalDateTime createdAt;
@@ -25,6 +26,7 @@ public class AlertResponse {
                 .id(alert.getId())
                 .pipeId(alert.getPipeId())
                 .pipeName(alert.getPipeName())
+                .regionId(alert.getRegionId())
                 .status(alert.getStatus() == null ? null : alert.getStatus().name().toLowerCase())
                 .message(alert.getMessage())
                 .createdAt(alert.getCreatedAt())

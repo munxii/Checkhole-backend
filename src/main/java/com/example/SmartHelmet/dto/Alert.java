@@ -26,6 +26,10 @@ public class Alert {
 
     private String pipeName;
 
+    /** Denormalized from pipe.regionId for RBAC filtering */
+    @Indexed
+    private String regionId;
+
     private Pipe.Status status;
 
     private String message;

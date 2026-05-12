@@ -23,6 +23,11 @@ public class Pipe {
 
     private String name;
     private String region;
+
+    /** Region.id (e.g., "seoul-gangnam") — RBAC scoping key */
+    @org.springframework.data.mongodb.core.index.Indexed
+    private String regionId;
+
     private String address;
     private double lat;
     private double lng;
