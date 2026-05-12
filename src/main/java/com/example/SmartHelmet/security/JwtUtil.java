@@ -14,7 +14,11 @@ public class JwtUtil {
     private final Key key;
     private final long EXPIRATION = 1000 * 60 * 60;
 
-    public JwtUtil(@Value("${jwt.secret:shinkhole-dev-secret-key-please-change-in-production-32bytes!}") String secret) {
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT_SECRET is required. Set it in backend/.env or as an environment variable.");
+        }
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
