@@ -19,5 +19,6 @@ public record GatewayReadingRequest(
         @JsonProperty("anomaly_score") Double anomalyScore,
         Double lat,
         Double lng,
-        String receivedAt
+        String receivedAt,
+        Integer batteryLevel
 ) {}

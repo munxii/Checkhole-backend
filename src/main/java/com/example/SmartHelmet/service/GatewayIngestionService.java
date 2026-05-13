@@ -63,6 +63,7 @@ public class GatewayIngestionService {
                 .peak(peak)
                 .amp(amp)
                 .anomalyScore(anomalyScore)
+                .batteryLevel(req.batteryLevel())
                 .build());
 
         // Update pipe summary

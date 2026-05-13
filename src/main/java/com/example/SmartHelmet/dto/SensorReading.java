@@ -40,4 +40,6 @@ public class SensorReading {
 
     /** Edge-AI (IsolationForest) anomaly probability (0.0~1.0). Null if AI not available. */
     private Double anomalyScore;
+    /** Battery level percentage (0~100). Null if not available. */
+    private Integer batteryLevel;
 }
