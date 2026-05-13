@@ -46,19 +46,23 @@ public class GatewayIngestionService {
 
         double amp = req.amp();
         double peak = req.peak() != null ? req.peak() : 0.0;
+        Double anomalyScore = req.anomalyScore();
         LocalDateTime ts = parseTimestamp(req.receivedAt());
 
+        // Judgement source: anomaly_score (AI) takes precedence; fall back to amp.
+        double judgementValue = anomalyScore != null ? anomalyScore : amp;
         Pipe.Status newStatus;
-        if (amp >= DANGER_THRESHOLD) newStatus = Pipe.Status.DANGER;
-        else if (amp >= CAUTION_THRESHOLD) newStatus = Pipe.Status.CAUTION;
+        if (judgementValue >= DANGER_THRESHOLD) newStatus = Pipe.Status.DANGER;
+        else if (judgementValue >= CAUTION_THRESHOLD) newStatus = Pipe.Status.CAUTION;
         else newStatus = Pipe.Status.NORMAL;
 
-        // Persist sensor reading (peak/amp populated; legacy 4 metrics default to 0.0)
+        // Persist sensor reading (peak/amp/anomalyScore populated as available)
         sensorReadingRepository.save(SensorReading.builder()
                 .pipeId(pipe.getId())
                 .timestamp(ts)
                 .peak(peak)
                 .amp(amp)
+                .anomalyScore(anomalyScore)
                 .build());
 
         // Update pipe summary
@@ -67,17 +71,24 @@ public class GatewayIngestionService {
         pipe.setUpdatedAt(ts);
         pipeRepository.save(pipe);
 
-        log.info("[gateway] ingest deviceId={} amp={} → {} (pipe {})",
-                req.deviceId(), amp, newStatus, pipe.getId());
+        log.info("[gateway] ingest deviceId={} amp={} anomalyScore={} → {} (pipe {})",
+                req.deviceId(), amp, anomalyScore, newStatus, pipe.getId());
 
         // No alert for NORMAL — only persist reading + update pipe
         if (newStatus == Pipe.Status.NORMAL) return null;
 
-        int score = (int) Math.round(amp * 100);
         String label = newStatus == Pipe.Status.DANGER ? "[위험]" : "[주의]";
-        String message = String.format(
-                "%s 공명 진폭 이상 — 빈 공간 가능성 %d%% (peak: %.0f Hz, amp: %.2f)",
-                label, score, peak, amp);
+        int score = (int) Math.round(judgementValue * 100);
+        String message;
+        if (anomalyScore != null) {
+            message = String.format(
+                    "%s AI 추론 기반 빈 공간 가능성 %d%% (peak: %.0f Hz, amp: %.2f)",
+                    label, score, peak, amp);
+        } else {
+            message = String.format(
+                    "%s 공명 진폭 이상 — 빈 공간 가능성 %d%% (peak: %.0f Hz, amp: %.2f)",
+                    label, score, peak, amp);
+        }
 
         Alert alert = Alert.builder()
                 .pipeId(pipe.getId())

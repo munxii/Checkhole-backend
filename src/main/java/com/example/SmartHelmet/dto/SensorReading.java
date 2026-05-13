@@ -37,4 +37,7 @@ public class SensorReading {
 
     /** Acoustic resonance amplitude (0.0~1.0). Populated by gateway ingestion only. */
     private Double amp;
+
+    /** Edge-AI (IsolationForest) anomaly probability (0.0~1.0). Null if AI not available. */
+    private Double anomalyScore;
 }
