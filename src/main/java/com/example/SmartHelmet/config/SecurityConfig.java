@@ -1,5 +1,6 @@
 package com.example.SmartHelmet.config;
 
+import com.example.SmartHelmet.security.GatewayAuthFilter;
 import com.example.SmartHelmet.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final GatewayAuthFilter gatewayAuthFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -35,11 +37,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/ws/**").permitAll()
-                        // Gateway ingestion: API key check is done in GatewayController itself
+                        // Gateway ingestion: API key check is done by GatewayAuthFilter (added below).
+                        // permitAll here means: skip JWT/role check; the filter shorted-out earlier on bad key.
                         .requestMatchers("/api/gateway/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
+                // Order: gateway filter first (only acts on /api/gateway/**), then JWT filter (acts on Bearer header).
+                .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

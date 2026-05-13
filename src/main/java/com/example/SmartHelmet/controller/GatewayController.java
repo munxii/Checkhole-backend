@@ -4,18 +4,19 @@ import com.example.SmartHelmet.dto.AlertResponse;
 import com.example.SmartHelmet.dto.GatewayReadingRequest;
 import com.example.SmartHelmet.service.GatewayIngestionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Authentication for /api/gateway/** is handled by {@link com.example.SmartHelmet.security.GatewayAuthFilter}
+ * (X-Gateway-Key header check). This controller assumes the request is already authorized.
+ */
 @RestController
 @RequestMapping("/api/gateway")
 @RequiredArgsConstructor
@@ -23,31 +24,19 @@ public class GatewayController {
 
     private final GatewayIngestionService gatewayIngestionService;
 
-    @Value("${gateway.api-key}")
-    private String expectedKey;
-
     @PostMapping("/sensor-reading")
-    public ResponseEntity<?> ingest(
-            @RequestHeader(value = "X-Gateway-Key", required = false) String providedKey,
-            @RequestBody GatewayReadingRequest req
-    ) {
-        if (providedKey == null || !providedKey.equals(expectedKey)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid gateway key");
-        }
-
+    public ResponseEntity<Map<String, Object>> ingest(@RequestBody GatewayReadingRequest req) {
         AlertResponse alert = gatewayIngestionService.ingest(req);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", "ok");
         if (alert == null) {
-            return ResponseEntity.ok(Map.of(
-                    "status", "ok",
-                    "judgement", "NORMAL",
-                    "alertCreated", false
-            ));
+            body.put("judgement", "NORMAL");
+            body.put("alertCreated", false);
+        } else {
+            body.put("judgement", alert.getStatus());
+            body.put("alertCreated", true);
+            body.put("alert", alert);
         }
-        return ResponseEntity.ok(Map.of(
-                "status", "ok",
-                "judgement", alert.getStatus(),
-                "alertCreated", true,
-                "alert", alert
-        ));
+        return ResponseEntity.ok(body);
     }
 }
